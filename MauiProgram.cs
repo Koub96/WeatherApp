@@ -19,6 +19,12 @@ namespace WeatherApp
     		builder.Logging.AddDebug();
 #endif
 
+            builder.Services
+            .AddRefitClient<IOpenWeatherForecastApi>()
+            .ConfigureHttpClient(c =>
+            {
+                c.BaseAddress = new Uri("https://api.openweathermap.org/data/2.5");
+            });
             return builder.Build();
         }
     }
