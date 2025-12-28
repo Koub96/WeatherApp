@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using CommunityToolkit.Maui;
+using Microsoft.Extensions.Logging;
+using Refit;
 
 namespace WeatherApp
 {
@@ -19,6 +21,9 @@ namespace WeatherApp
 #if DEBUG
     		builder.Logging.AddDebug();
 #endif
+
+            builder.Services.AddTransient<WeatherViewModel>();
+            builder.Services.AddTransient<MainPage>();
 
             builder.Services
             .AddRefitClient<IOpenWeatherForecastApi>()

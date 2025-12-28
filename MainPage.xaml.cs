@@ -1,25 +1,50 @@
-﻿namespace WeatherApp
+﻿using CommunityToolkit.Maui.Alerts;
+using Microsoft.Maui.ApplicationModel;
+
+namespace WeatherApp
 {
     public partial class MainPage : ContentPage
     {
-        int count = 0;
-
         public MainPage()
         {
             InitializeComponent();
+
+            WeatherViewModel? viewModel = Application.Current?.Handler.MauiContext?.Services.GetRequiredService<WeatherViewModel>();
+
+            BindingContext = viewModel;
         }
 
-        private void OnCounterClicked(object sender, EventArgs e)
+        protected async override void OnNavigatedTo(NavigatedToEventArgs args)
         {
-            count++;
+            base.OnNavigatedTo(args);
 
-            if (count == 1)
-                CounterBtn.Text = $"Clicked {count} time";
-            else
-                CounterBtn.Text = $"Clicked {count} times";
+            if (BindingContext is not null && BindingContext is WeatherViewModel)
+            {
+                (BindingContext as WeatherViewModel).onLocationError += OnLocationError;
+                await (BindingContext as WeatherViewModel).GetUserLocationAsync();
+            }
+        }
 
-            SemanticScreenReader.Announce(CounterBtn.Text);
+        protected override void OnNavigatedFrom(NavigatedFromEventArgs args)
+        {
+            base.OnNavigatedFrom(args);
+
+            if (BindingContext is not null && BindingContext is WeatherViewModel)
+            {
+                (BindingContext as WeatherViewModel).onLocationError -= OnLocationError;
+            }
+        }
+
+        private async void OnLocationError(object? sender, LocationErrorEventArgs e)
+        {
+            var snackbar = Snackbar.Make(
+                actionButtonText: "Settings",
+                action: () => AppInfo.ShowSettingsUI(),
+                message: e.ErrorMessage,
+                duration: TimeSpan.FromSeconds(3.5)
+            );
+
+            await snackbar.Show();
         }
     }
-
 }

@@ -5,6 +5,7 @@
              x:Class="WeatherApp.App">
     <Application.Resources>
         <ResourceDictionary>
+            <local:IconUrlConverter x:Key="IconUrlConverter"/>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
