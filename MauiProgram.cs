@@ -26,6 +26,10 @@ namespace WeatherApp
             {
                 c.BaseAddress = new Uri("https://api.openweathermap.org/data/2.5");
             });
+
+            builder.Services.AddRefitClient<IGeoCodingApi>()
+            .ConfigureHttpClient(c => c.BaseAddress = new Uri("http://api.openweathermap.org"));
+
             return builder.Build();
         }
     }
