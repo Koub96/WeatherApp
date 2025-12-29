@@ -6,6 +6,7 @@
     <Application.Resources>
         <ResourceDictionary>
             <local:IconUrlConverter x:Key="IconUrlConverter"/>
+            <local:NegateBoolConverter x:Key="NegateBoolConverter"/>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />

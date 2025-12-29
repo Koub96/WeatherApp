@@ -6,16 +6,17 @@
 
         <Grid Padding="8" Margin="4">
             <RefreshView IsRefreshing="{Binding IsRefreshing, Mode=OneWay}" Command="{Binding RefreshCommand}" Padding="8">
-                <VerticalStackLayout Spacing="28">
-                <Label Text="Weather forecast for the next 5 days" FontSize="16" FontAttributes="Bold" IsVisible="{Binding HasForecast}"/>
-                <CollectionView ItemsSource="{Binding Forecast}" IsVisible="{Binding HasForecast}" ItemsLayout="HorizontalList" HeightRequest="180">
+                <VerticalStackLayout Spacing="28" IsVisible="{Binding IsLoading, Converter={StaticResource NegateBoolConverter}}">
+                    <Label Text="Weather forecast for the next 5 days" FontSize="16" FontAttributes="Bold" IsVisible="{Binding HasForecast}"/>
+                    <Label Text="{Binding CityName}" FontSize="14" IsVisible="{Binding HasForecast}"/>
+                    <CollectionView ItemsSource="{Binding Forecast}" IsVisible="{Binding HasForecast}" ItemsLayout="HorizontalList" HeightRequest="180" Margin="0,0,24,2">
                         <CollectionView.ItemTemplate>
                             <DataTemplate>
-                                <Border Stroke="#DDD" StrokeThickness="1" Padding="15" Margin="8" BackgroundColor="CadetBlue">
+                                <Border Stroke="#DDD" StrokeThickness="1" Padding="4" Margin="4" BackgroundColor="CadetBlue" StrokeShape="RoundRectangle 8">
                                     <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="4">
                                         <Label Text="{Binding LocalDateTime}" FontSize="18" FontAttributes="Bold" HorizontalOptions="Center"/>
                                         <Image Source="{Binding Weather[0].Icon, Converter={StaticResource IconUrlConverter}}" HeightRequest="50" WidthRequest="50"/>
-                                        <Label Text="{Binding Main.Temp, StringFormat='{0}°C'}" FontSize="14" HorizontalOptions="Center"/>
+                                        <Label Text="{Binding Main.Temp, StringFormat='{0:F1}°C'}" FontSize="14" HorizontalOptions="Center"/>
                                         <Label Text="{Binding Weather[0].Description}" FontSize="13" TextColor="Black" HorizontalOptions="Center"/>
                                     </VerticalStackLayout>
                                 </Border>
@@ -24,25 +25,27 @@
                     </CollectionView>
                     <HorizontalStackLayout HorizontalOptions="Center" Spacing="10">
                             <Entry Placeholder="Enter city" x:Name="CityEntry" HorizontalOptions="FillAndExpand" WidthRequest="120"/>
-                            <ImageButton Source="search.png" 
+                            <ImageButton Source="search.png"
+                                 Padding="6"
                                  CornerRadius="4"
-                                 WidthRequest="24" 
-                                 HeightRequest="24"
-                                 BackgroundColor="White"
+                                 WidthRequest="32" 
+                                 HeightRequest="32"
+                                 BackgroundColor="LightBlue"
                                  Command="{Binding SearchCityCommand}"
                                  CommandParameter="{Binding Text, Source={x:Reference CityEntry}}"/>
                     </HorizontalStackLayout>
                 </VerticalStackLayout>
             </RefreshView>
 
+            <!-- We can also add a shimmer here instead, for a nicer UX. -->
             <ActivityIndicator
                 IsRunning="{Binding IsLoading}"
                 IsVisible="{Binding IsLoading}"
                 HorizontalOptions="Center"
                 VerticalOptions="Center"
                 Color="#2196F3"
-                WidthRequest="60"
-                HeightRequest="60"/>
+                WidthRequest="40"
+                HeightRequest="40"/>
 
             <VerticalStackLayout IsVisible="{Binding NoForecast}" HorizontalOptions="Center" VerticalOptions="Center">
                 <Image Source="placeholder.png" HeightRequest="120" WidthRequest="120"/>
