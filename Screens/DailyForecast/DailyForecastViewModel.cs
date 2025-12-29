@@ -15,10 +15,12 @@ public class WeatherViewModel : INotifyPropertyChanged
     {
         _weatherApi = weatherApi;
         _geoApi = geoApi;
+
         SearchCityCommand = new Command<string>(async (city) => await SearchCityAsync(city));
         RefreshCommand = new Command(async () => await Refresh());
     }
 
+    #region Bindable Properties
     private bool _isRefreshing;
     public bool IsRefreshing
     {
@@ -47,13 +49,6 @@ public class WeatherViewModel : INotifyPropertyChanged
         set => SetProperty(ref _forecast, value);
     }
 
-    private string _errorMessage = string.Empty;
-    public string ErrorMessage
-    {
-        get => _errorMessage;
-        set => SetProperty(ref _errorMessage, value);
-    }
-
     public bool NoForecast => !Forecast.Any() && !IsLoading;
     public bool HasForecast => Forecast.Any();
 
@@ -61,12 +56,20 @@ public class WeatherViewModel : INotifyPropertyChanged
     public ICommand RefreshCommand { get; }
     public ICommand SearchCityCommand { get; }
 
-
     public event EventHandler<LocationErrorEventArgs>? onLocationError;
+    public event EventHandler<SearchErrorEventArgs>? onSearchError;
+    public event EventHandler<LoadForecastsErrorEventArgs>? onForecastsLoadError;
+    #endregion
 
-    private double userLat;
-    private double userLon;
+    #region Private Properties
+    private double _userLat;
+    private double _userLon;
 
+    //This property should be stored server side as it can be decompiled and stolen.
+    private const string _apiKey = "df74e6d40a2d3d15b9eb73215f18b63c";
+    #endregion
+
+    #region Commands
     private async Task Refresh()
     {
         if (IsRefreshing)
@@ -76,14 +79,13 @@ public class WeatherViewModel : INotifyPropertyChanged
         {
             IsRefreshing = true;
 
-            await LoadForecastAsync(userLat, userLon);
+            await LoadForecastAsync(_userLat, _userLon);
         }
         finally
         {
             IsRefreshing = false;
         }
     }
-
     private async Task LoadForecastAsync(double lat, double lon)
     {
         if (IsLoading)
@@ -93,14 +95,12 @@ public class WeatherViewModel : INotifyPropertyChanged
         {
             UpdateIsLoading(true);
 
-            ErrorMessage = string.Empty;
-
             Forecast.Clear();
 
             var response = await _weatherApi.GetForecastAsync(
-                lat: 44.34,
-                lon: 10.99,
-                appid: "df74e6d40a2d3d15b9eb73215f18b63c",
+                lat: lat,
+                lon: lon,
+                appid: _apiKey,
                 units: "metric"
             );
 
@@ -109,15 +109,13 @@ public class WeatherViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            ErrorMessage = "Failed to load weather data.";
-            System.Diagnostics.Debug.WriteLine(ex);
+            onForecastsLoadError?.Invoke(this, new LoadForecastsErrorEventArgs("Could not load forecasts. Please try again."));
         }
         finally
         {
             UpdateIsLoading(false);
         }
     }
-
     public async Task GetUserLocationAsync()
     {
         try
@@ -130,10 +128,10 @@ public class WeatherViewModel : INotifyPropertyChanged
 
             if (location != null)
             {
-                userLat = location.Latitude;
-                userLon = location.Longitude;
+                _userLat = location.Latitude;
+                _userLon = location.Longitude;
 
-                await LoadForecastAsync(userLat, userLon);
+                await LoadForecastAsync(_userLat, _userLon);
             }
         }
         catch (FeatureNotSupportedException)
@@ -149,7 +147,6 @@ public class WeatherViewModel : INotifyPropertyChanged
             onLocationError?.Invoke(this, new LocationErrorEventArgs("Unable to get location."));
         }
     }
-
     private async Task SearchCityAsync(string cityName)
     {
         if (string.IsNullOrWhiteSpace(cityName))
@@ -162,16 +159,13 @@ public class WeatherViewModel : INotifyPropertyChanged
         {
             UpdateIsLoading(true);
 
-            ErrorMessage = string.Empty;
-            Forecast.Clear();
-
-            var cities = await _geoApi.GetCityCoordinatesAsync(cityName, limit: 5, apiKey: "df74e6d40a2d3d15b9eb73215f18b63c");
+            var cities = await _geoApi.GetCityCoordinatesAsync(cityName, limit: 5, apiKey: _apiKey);
 
             var greekCity = cities.FirstOrDefault(c => c.Country == "GR");
 
             if (greekCity == null)
             {
-                ErrorMessage = "No Greek city found with that name.";
+                onSearchError?.Invoke(this, new SearchErrorEventArgs("City not found."));
                 return;
             }
 
@@ -180,7 +174,7 @@ public class WeatherViewModel : INotifyPropertyChanged
             var response = await _weatherApi.GetForecastAsync(
                 lat: greekCity.Lat,
                 lon: greekCity.Lon,
-                appid: "df74e6d40a2d3d15b9eb73215f18b63c",
+                appid: _apiKey,
                 units: "metric"
             );
 
@@ -188,15 +182,14 @@ public class WeatherViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            ErrorMessage = "Failed to load weather data.";
-            System.Diagnostics.Debug.WriteLine(ex);
+            onSearchError?.Invoke(this, new SearchErrorEventArgs("Search failed. Please try again."));
         }
         finally
         {
             UpdateIsLoading(false);
         }
     }
-
+    #endregion
 
     #region Helpers
     private void UpdateIsLoading(bool value) => IsLoading = value;
@@ -239,6 +232,7 @@ public class WeatherViewModel : INotifyPropertyChanged
     #endregion
 }
 
+#region Event Args
 public class LocationErrorEventArgs : EventArgs 
 {
     public string ErrorMessage { get; private set; }
@@ -247,3 +241,20 @@ public class LocationErrorEventArgs : EventArgs
         this.ErrorMessage = errorMessage;
     }
 }
+public class SearchErrorEventArgs : EventArgs
+{
+    public string ErrorMessage { get; private set; }
+    public SearchErrorEventArgs(string errorMessage)
+    {
+        this.ErrorMessage = errorMessage;
+    }
+}
+public class LoadForecastsErrorEventArgs : EventArgs
+{
+    public string ErrorMessage { get; private set; }
+    public LoadForecastsErrorEventArgs(string errorMessage)
+    {
+        this.ErrorMessage = errorMessage;
+    }
+}
+#endregion
