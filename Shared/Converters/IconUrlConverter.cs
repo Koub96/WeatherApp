@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 
 namespace WeatherApp;
 
+/// <summary>
+/// Converts an Open Weather API icon code to a public url in order to fetch the weather forecast image.
+/// </summary>
 public class IconUrlConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

@@ -6,6 +6,11 @@ using Microsoft.Maui.Devices.Sensors;
 
 namespace WeatherApp;
 
+/// <summary>
+/// View Model of the Dail Forecast Screen.
+/// It is responsible for fetching the daily weather forecast and search for the daily forecast of a Greek city
+/// searched by the user.
+/// </summary>
 public class WeatherViewModel : INotifyPropertyChanged
 {
     private readonly IOpenWeatherForecastApi _weatherApi;
@@ -70,6 +75,10 @@ public class WeatherViewModel : INotifyPropertyChanged
     #endregion
 
     #region Commands
+    /// <summary>
+    /// Executes a refresh of the daily forecast dataset.
+    /// </summary>
+    /// <returns></returns>
     private async Task Refresh()
     {
         if (IsRefreshing)
@@ -86,6 +95,13 @@ public class WeatherViewModel : INotifyPropertyChanged
             IsRefreshing = false;
         }
     }
+    /// <summary>
+    /// Loads the daily forecast depending on the latitude and longitude fetched
+    /// from the GPS sesnor or from the city search by the user.
+    /// </summary>
+    /// <param name="lat">The latitude of the position to fetch the weather forecast</param>
+    /// <param name="lon">The longitude of the position to fetch the weather forecast</param>
+    /// <returns></returns>
     private async Task LoadForecastAsync(double lat, double lon)
     {
         if (IsLoading)
@@ -116,6 +132,13 @@ public class WeatherViewModel : INotifyPropertyChanged
             UpdateIsLoading(false);
         }
     }
+    /// <summary>
+    /// Initiates a user location detection via the GPS sensor of the device.
+    /// Automatically loads the daily forecast when a position is fetched.
+    /// Handles exceptions in case the device does not have a GPS sensor or the user
+    /// did not accept the required perimissions.
+    /// </summary>
+    /// <returns></returns>
     public async Task GetUserLocationAsync()
     {
         try
@@ -147,6 +170,11 @@ public class WeatherViewModel : INotifyPropertyChanged
             onLocationError?.Invoke(this, new LocationErrorEventArgs("Unable to get location."));
         }
     }
+    /// <summary>
+    /// Fetches the weather forecast of the city searched by the user.
+    /// </summary>
+    /// <param name="cityName">The Greek city for which the user searched.</param>
+    /// <returns></returns>
     private async Task SearchCityAsync(string cityName)
     {
         if (string.IsNullOrWhiteSpace(cityName))
